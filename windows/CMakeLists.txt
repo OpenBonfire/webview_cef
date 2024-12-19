@@ -8,13 +8,9 @@ cmake_minimum_required(VERSION 3.14)
 set(PROJECT_NAME "webview_cef")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-message(STATUS "${CMAKE_BUILD_TYPE}")
-endif()
-
-include(${CMAKE_CURRENT_SOURCE_DIR}/../third/download.cmake)
-# wait for unified version cef source code and prebuilt files
-prepare_prebuilt_files(${CMAKE_CURRENT_SOURCE_DIR}/../third/cef)
+# Explicitly opt in to modern CMake behaviors to avoid warnings with recent
+# versions of CMake.
+cmake_policy(VERSION 3.14...3.25)
 
 # This value is used when generating builds using this plugin, so it must
 # not be changed
@@ -24,19 +20,6 @@ set(PLUGIN_NAME "webview_cef_plugin")
 list(APPEND PLUGIN_SOURCES
   "webview_cef_plugin.cpp"
   "webview_cef_plugin.h"
-  "webview_cef_keyevent.h"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_app.cc"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_app.h"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_handler.cc"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_handler.h"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_plugin.cc"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_plugin.h"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_value.cc"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_value.h"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_js_handler.cc"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_js_handler.h"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_cookieVisitor.cc"
-  "${CMAKE_CURRENT_LIST_DIR}/../common/webview_cookieVisitor.h"
 )
 
 # Define the plugin library target. Its name must not be changed (see comment
@@ -63,53 +46,55 @@ target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
 # dependencies here.
 target_include_directories(${PLUGIN_NAME} INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third/cef)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
-
-target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin
-debug ${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/libcef.lib
-debug ${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/libcef_dll_wrapper.lib
-optimized ${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/libcef.lib
-optimized ${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/libcef_dll_wrapper.lib)
+target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin)
 
 # List of absolute paths to libraries that should be bundled with the plugin.
 # This list could contain prebuilt libraries, or libraries created by an
 # external build triggered from this build file.
 set(webview_cef_bundled_libraries
-    "${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/resources/locales"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/resources/icudtl.dat"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/resources/resources.pak"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/resources/chrome_100_percent.pak"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/resources/chrome_200_percent.pak"
-    $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/bin/chrome_elf.dll>
-    $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/bin/libcef.dll>
-    $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/bin/v8_context_snapshot.bin>
-    $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/bin/swiftshader>
-    $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/bin/d3dcompiler_47.dll>
-    $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/bin/libEGL.dll>
-    $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/bin/libGLESv2.dll>
-    $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/bin/vulkan-1.dll>
-    $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/bin/vk_swiftshader.dll>
-    $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/debug/bin/vk_swiftshader_icd.json>
-    $<$<CONFIG:Release>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/chrome_elf.dll>
-    $<$<CONFIG:Release>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/libcef.dll>
-    $<$<CONFIG:Release>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/v8_context_snapshot.bin>
-    $<$<CONFIG:Release>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/swiftshader>
-    $<$<CONFIG:Release>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/d3dcompiler_47.dll>
-    $<$<CONFIG:Release>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/libEGL.dll>
-    $<$<CONFIG:Release>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/libGLESv2.dll>
-    $<$<CONFIG:Release>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/vulkan-1.dll>
-    $<$<CONFIG:Release>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/vk_swiftshader.dll>
-    $<$<CONFIG:Release>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/vk_swiftshader_icd.json>
-    $<$<CONFIG:Profile>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/chrome_elf.dll>
-    $<$<CONFIG:Profile>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/libcef.dll>
-    $<$<CONFIG:Profile>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/v8_context_snapshot.bin>
-    $<$<CONFIG:Profile>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/swiftshader>
-    $<$<CONFIG:Profile>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/d3dcompiler_47.dll>
-    $<$<CONFIG:Profile>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/libEGL.dll>
-    $<$<CONFIG:Profile>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/libGLESv2.dll>
-    $<$<CONFIG:Profile>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/vulkan-1.dll>
-    $<$<CONFIG:Profile>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/vk_swiftshader.dll>
-    $<$<CONFIG:Profile>:${CMAKE_CURRENT_SOURCE_DIR}/../third/cef/release/bin/vk_swiftshader_icd.json>
-    PARENT_SCOPE)
+  ""
+  PARENT_SCOPE
+)
 
+# === Tests ===
+# These unit tests can be run from a terminal after building the example, or
+# from Visual Studio after opening the generated solution file.
+
+# Only enable test builds when building the example (which sets this variable)
+# so that plugin clients aren't building the tests.
+if (${include_${PROJECT_NAME}_tests})
+set(TEST_RUNNER "${PROJECT_NAME}_test")
+enable_testing()
+
+# Add the Google Test dependency.
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/release-1.11.0.zip
+)
+# Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+# Disable install commands for gtest so it doesn't end up in the bundle.
+set(INSTALL_GTEST OFF CACHE BOOL "Disable installation of googletest" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+# The plugin's C API is not very useful for unit testing, so build the sources
+# directly into the test binary rather than using the DLL.
+add_executable(${TEST_RUNNER}
+  test/webview_cef_plugin_test.cpp
+  ${PLUGIN_SOURCES}
+)
+apply_standard_settings(${TEST_RUNNER})
+target_include_directories(${TEST_RUNNER} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(${TEST_RUNNER} PRIVATE flutter_wrapper_plugin)
+target_link_libraries(${TEST_RUNNER} PRIVATE gtest_main gmock)
+# flutter_wrapper_plugin has link dependencies on the Flutter DLL.
+add_custom_command(TARGET ${TEST_RUNNER} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  "${FLUTTER_LIBRARY}" $<TARGET_FILE_DIR:${TEST_RUNNER}>
+)
+
+# Enable automatic test discovery.
+include(GoogleTest)
+gtest_discover_tests(${TEST_RUNNER})
+endif()
